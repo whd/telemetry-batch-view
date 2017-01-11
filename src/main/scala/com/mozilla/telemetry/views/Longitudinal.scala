@@ -105,8 +105,8 @@ object LongitudinalView {
 
   private class Opts(args: Array[String]) extends ScallopConf(args) {
     val from = opt[String]("from", descr = "From submission date", required = false)
-    val to = opt[String]("to", descr = "To submission date", required = true)
-    val outputBucket = opt[String]("bucket", descr = "bucket", required = true)
+    val to = opt[String]("to", descr = "To submission date", required = false)
+    val outputBucket = opt[String]("bucket", descr = "bucket", required = false)
     verify()
   }
 
@@ -124,7 +124,7 @@ object LongitudinalView {
     sparkConf.setMaster(sparkConf.get("spark.master", "local[*]"))
     implicit val sc = new SparkContext(sparkConf)
 
-    val messages = Dataset("telemetry-sample")
+    val messages = Dataset("telemetry-sample-newinfra")
       .where("sourceName") {
         case "telemetry" => true
       }.where("sourceVersion") {
@@ -143,8 +143,8 @@ object LongitudinalView {
 
   private def run(opts: Opts, messages: RDD[Message]): Unit = {
     val clsName = "longitudinal" // Needed for retro-compatibility with existing data
-    val prefix = s"${clsName}/v${opts.to()}"
-    val outputBucket = opts.outputBucket()
+    val prefix = s"whd/${clsName}/v${opts.to()}"
+    val outputBucket = "net-mozaws-prod-us-west-2-pipeline-analysis"
     val lockfileName = "RUNNING"
 
     require(S3Store.isPrefixEmpty(outputBucket, prefix), s"s3://${outputBucket}/${prefix} already exists!")
